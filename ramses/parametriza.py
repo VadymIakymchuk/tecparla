@@ -5,12 +5,12 @@ import soundfile as sf
 from prm import *
 from tqdm import tqdm 
 
-def parametriza(dirPrm, dirSen, *guiSen):
+def parametriza(dirPrm, dirSen, *guiSen, funcPrm=np.array):
     ficheros = tqdm(leeLis(*guiSen))
     for fichero in ficheros:
         pathSen = pathName(dirSen, fichero,'wav')
         sen, fm = sf.read(pathSen)
-        prm = sen.copy()
+        prm = funcPrm(sen)
         pathPrm = pathName(dirPrm, fichero, 'prm')
         chkPathName(pathPrm)
         escrPrm(pathPrm, prm)
@@ -30,6 +30,8 @@ Usage:
 Opciones: 
     --dirPrm, -p PATH directorio con los ficheros resultantes de la parametrizacion
     --dirSen, -s PATH directorio con las señales
+    --execPre, -x SCRIPTS  scripts a ejecutar antes de la parametrización
+    --funcPrm, -f EXPR  expresion que proporciona la función de parametrización [default: np.array]
 
 Diccionario:
     <guiSen> fichero/s guia
@@ -39,6 +41,13 @@ Diccionario:
     dirPrm = args['--dirPrm']
     dirSen = args['--dirSen']
     guiSen = args['<guiSen>']
+    
+    scripts = args['--execPre']
+    if scripts: 
+        for script in scripts.split(','):
+            exec(open(script).read())
 
-    parametriza(dirPrm, dirSen, *guiSen)
+    funcPrm = eval(args['--funcPrm'])
+
+    parametriza(dirPrm, dirSen, *guiSen, funcPrm=funcPrm)
     

@@ -5,14 +5,17 @@ from util import *
 from prm import *
 from mar import *
 from tqdm import tqdm 
-from euclidio import Euclidio
 
-def entrena(dirPrm, dirMar, lisFon, ficMod, *figGui):
+
+def entrena(dirPrm, dirMar, LisFon, ficMod, *figGui):
     # construimos el modelo inicial
-    modelo = Euclidio(lisFon)
+    modelo = {}
+    unidades = leeLis(LisFon)
     # inicializamos las estructuras necesarias para el entrenamiento
-    modelo.inicMod()
-
+    total = {unidad : 0 for unidad in unidades}
+    total2 = {unidad : 0 for unidad in unidades}
+    numUdf = {unidad : 0 for unidad in unidades}
+    
     # bucle para todas las señales
     for senyal in tqdm(leeLis(*figGui)):
         pathMar = pathName(dirMar, senyal, 'mar')
@@ -20,13 +23,25 @@ def entrena(dirPrm, dirMar, lisFon, ficMod, *figGui):
         pathPrm = pathName(dirPrm, senyal, 'prm')
         prm = leePrm(pathPrm)
         # incorporamos la info inicial al modelo
-        modelo.addPrm(prm, unidad)
+        total[unidad] += prm
+        total2[unidad] += prm **2
+        numUdf[unidad] += 1
     # recalculamos el modelo
-    modelo.recaMod()
+    distancia = 0
+    variancia = 0
+    media = 0
+    for unidad in unidades:
+        modelo[unidad] = total[unidad] / numUdf[unidad] 
+        distancia += (total2[unidad]/ numUdf[unidad] - modelo[unidad] ** 2)
+        media += total2[unidad]/ numUdf[unidad]
+    distancia = np.sum(distancia) ** 0.5
     # mostramos en pantalla la evolucion del entrenamiento
-    modelo.printEvo()
+    print(f"{distancia = :.2f}")
     # escribimos el modelo generado
-    modelo.escMod()
+    chkPathName(ficMod)
+    with open(ficMod, 'wb') as fpMod:
+       np.save(fpMod, modelo)
+
 
 if __name__ == '__main__':
     from docopt import docopt
